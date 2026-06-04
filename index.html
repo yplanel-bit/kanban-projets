@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#161b22">
+  <link rel="manifest" href="manifest.json">
+  <title>🎯 Mes Projets — Kanban</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --success: #238636;
+      --warning: #d29922;
+      --danger: #da3633;
+      --col-backlog: #8b949e;
+      --col-todo: #58a6ff;
+      --col-doing: #d29922;
+      --col-done: #238636;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+    header {
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    h1 { font-size: 1.75rem; display: flex; align-items: center; gap: 0.5rem; }
+    .stats {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+    }
+    @media (max-width: 1100px) {
+      .board { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .board { grid-template-columns: 1fr; }
+      body { padding: 1rem; }
+    }
+    .column {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      min-height: 400px;
+    }
+    .column-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .col-backlog .column-header { color: var(--col-backlog); }
+    .col-todo .column-header { color: var(--col-todo); }
+    .col-doing .column-header { color: var(--col-doing); }
+    .col-done .column-header { color: var(--col-done); }
+    .count {
+      background: var(--bg);
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.875rem;
+      margin-bottom: 0.75rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+      cursor: grab;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border-color: var(--accent);
+    }
+    .card-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 0.4rem;
+      line-height: 1.3;
+    }
+    .card-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-bottom: 0.6rem;
+    }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 0.5rem;
+    }
+    .tag {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-weight: 600;
+      background: rgba(88,166,255,0.15);
+      color: var(--accent);
+    }
+    .tag.dev { background: rgba(88,166,255,0.15); color: #58a6ff; }
+    .tag.content { background: rgba(210,153,34,0.15); color: #d29922; }
+    .tag.business { background: rgba(35,134,54,0.15); color: #3fb950; }
+    .tag.perso { background: rgba(218,54,51,0.15); color: #f85149; }
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .priority {
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+    }
+    .p-high { background: rgba(218,54,51,0.2); color: #f85149; }
+    .p-medium { background: rgba(210,153,34,0.2); color: #e3b341; }
+    .p-low { background: rgba(139,148,158,0.2); color: #b0b8c4; }
+    .dragging { opacity: 0.4; border: 2px dashed var(--accent); }
+    .add-card {
+      width: 100%;
+      padding: 0.6rem;
+      background: transparent;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 0.5rem;
+    }
+    .add-card:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .edit-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 0.2rem;
+    }
+    .edit-btn:hover { color: var(--text); }
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: none; align-items: center; justify-content: center;
+      z-index: 100;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      width: 90%; max-width: 450px;
+    }
+    .modal h3 { margin-bottom: 1rem; }
+    .modal label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin: 0.75rem 0 0.25rem;
+    }
+    .modal input, .modal textarea, .modal select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem;
+      color: var(--text);
+      font-family: inherit;
+    }
+    .modal textarea { resize: vertical; min-height: 80px; }
+    .modal-actions {
+      display: flex; gap: 0.5rem; justify-content: flex-end;
+      margin-top: 1.25rem;
+    }
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎯 Mes Projets</h1>
+    <div class="stats">
+      <span id="stat-total">0 projets</span>
+      <span id="stat-doing">0 en cours</span>
+      <span id="stat-done">0 terminés</span>
+    </div>
+  </header>
+
+  <div class="board">
+    <!-- BACKLOG -->
+    <div class="column col-backlog" data-status="backlog">
+      <div class="column-header">
+        <span>💡 Idées / Backlog</span>
+        <span class="count">0</span>
+      </div>
+      <div class="cards"></div>
+      <button class="add-card" onclick="openModal('backlog')">+ Ajouter une idée</button>
+    </div>
+
+    <!-- À FAIRE -->
+    <div class="column col-todo" data-status="todo">
+      <div class="column-header">
+        <span>📋 À faire</span>
+        <span class="count">0</span>
+      </div>
+      <div class="cards"></div>
+      <button class="add-card" onclick="openModal('todo')">+ Ajouter une tâche</button>
+    </div>
+
+    <!-- EN COURS -->
+    <div class="column col-doing" data-status="doing">
+      <div class="column-header">
+        <span>⚡ En cours</span>
+        <span class="count">0</span>
+      </div>
+      <div class="cards"></div>
+      <button class="add-card" onclick="openModal('doing')">+ Démarrer un projet</button>
+    </div>
+
+    <!-- TERMINÉ -->
+    <div class="column col-done" data-status="done">
+      <div class="column-header">
+        <span>✅ Terminé</span>
+        <span class="count">0</span>
+      </div>
+      <div class="cards"></div>
+      <button class="add-card" onclick="openModal('done')">+ Archiver</button>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <h3>📝 Éditer le projet</h3>
+      <label>Titre</label>
+      <input type="text" id="m-title" placeholder="Nom du projet">
+      <label>Description</label>
+      <textarea id="m-desc" placeholder="Quelques lignes de contexte..."></textarea>
+      <label>Type</label>
+      <select id="m-type">
+        <option value="dev">💻 Développement</option>
+        <option value="content">✍️ Contenu</option>
+        <option value="business">📈 Business</option>
+        <option value="perso">🏠 Personnel</option>
+        <option value="other">🔧 Autre</option>
+      </select>
+      <label>Priorité</label>
+      <select id="m-priority">
+        <option value="high">🔴 Haute</option>
+        <option value="medium">🟡 Moyenne</option>
+        <option value="low">🔵 Basse</option>
+      </select>
+      <div class="modal-actions">
+        <button class="btn btn-danger" onclick="deleteCard()" id="btn-delete">Supprimer</button>
+        <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+        <button class="btn btn-primary" onclick="saveCard()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- DATA ---
+    let projects = [
+      { id: 1, title: "Exemple: Application de tracking", desc: "App web pour suivre les habitudes quotidiennes", type: "dev", priority: "high", status: "backlog", date: "2025-06-04" },
+      { id: 2, title: "Exemple: Blog technique", desc: "Rédiger 10 articles sur l'IA en 2025", type: "content", priority: "medium", status: "todo", date: "2025-06-04" },
+    ];
+    let editingId = null;
+    let dragSrc = null;
+
+    // --- RENDER ---
+    function render() {
+      document.querySelectorAll('.cards').forEach(c => c.innerHTML = '');
+      projects.forEach(p => {
+        const col = document.querySelector(`.column[data-status="${p.status}"] .cards`);
+        const tagLabels = { dev: '💻 Dev', content: '✍️ Contenu', business: '📈 Business', perso: '🏠 Perso', other: '🔧 Autre' };
+        const prioLabels = { high: '🔴 Haute', medium: '🟡 Moyenne', low: '🔵 Basse' };
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.draggable = true;
+        card.dataset.id = p.id;
+        card.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:start;">
+            <div class="card-title">${escapeHtml(p.title)}</div>
+            <button class="edit-btn" onclick="event.stopPropagation();openEdit(${p.id})">✏️</button>
+          </div>
+          <div class="card-desc">${escapeHtml(p.desc)}</div>
+          <div class="tags">
+            <span class="tag ${p.type}">${tagLabels[p.type] || p.type}</span>
+          </div>
+          <div class="card-footer">
+            <span class="priority p-${p.priority}">${prioLabels[p.priority]}</span>
+            <span>${p.date}</span>
+          </div>
+        `;
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+        col.appendChild(card);
+      });
+
+      // Update counts
+      ['backlog','todo','doing','done'].forEach(s => {
+        const n = projects.filter(p => p.status === s).length;
+        document.querySelector(`.column[data-status="${s}"] .count`).textContent = n;
+      });
+      document.getElementById('stat-total').textContent = projects.length + ' projet' + (projects.length > 1 ? 's' : '');
+      document.getElementById('stat-doing').textContent = projects.filter(p => p.status === 'doing').length + ' en cours';
+      document.getElementById('stat-done').textContent = projects.filter(p => p.status === 'done').length + ' terminé' + (projects.filter(p => p.status === 'done').length > 1 ? 's' : '');
+
+      // Drop zones
+      document.querySelectorAll('.column').forEach(col => {
+        col.addEventListener('dragover', e => e.preventDefault());
+        col.addEventListener('drop', handleDrop);
+      });
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // --- DRAG & DROP ---
+    function handleDragStart(e) { dragSrc = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+    function handleDragEnd(e) { this.classList.remove('dragging'); dragSrc = null; }
+    function handleDrop(e) {
+      e.preventDefault();
+      const col = e.currentTarget;
+      if (!dragSrc || !col.classList.contains('column')) return;
+      const newStatus = col.dataset.status;
+      const id = Number(dragSrc.dataset.id);
+      const p = projects.find(x => x.id === id);
+      if (p) { p.status = newStatus; saveData(); render(); }
+    }
+
+    // --- MODAL ---
+    function openModal(status) {
+      editingId = null;
+      document.getElementById('m-title').value = '';
+      document.getElementById('m-desc').value = '';
+      document.getElementById('m-type').value = 'dev';
+      document.getElementById('m-priority').value = 'medium';
+      document.getElementById('btn-delete').style.display = 'none';
+      document.getElementById('modal').classList.add('active');
+      document.getElementById('modal').dataset.status = status;
+    }
+    function openEdit(id) {
+      const p = projects.find(x => x.id === id);
+      if (!p) return;
+      editingId = id;
+      document.getElementById('m-title').value = p.title;
+      document.getElementById('m-desc').value = p.desc;
+      document.getElementById('m-type').value = p.type;
+      document.getElementById('m-priority').value = p.priority;
+      document.getElementById('btn-delete').style.display = '';
+      document.getElementById('modal').classList.add('active');
+      document.getElementById('modal').dataset.status = p.status;
+    }
+    function closeModal() { document.getElementById('modal').classList.remove('active'); }
+    function saveCard() {
+      const title = document.getElementById('m-title').value.trim();
+      if (!title) return alert('Le titre est requis');
+      const desc = document.getElementById('m-desc').value.trim();
+      const type = document.getElementById('m-type').value;
+      const priority = document.getElementById('m-priority').value;
+      const status = document.getElementById('modal').dataset.status;
+      if (editingId) {
+        const p = projects.find(x => x.id === editingId);
+        Object.assign(p, { title, desc, type, priority, status });
+      } else {
+        projects.push({ id: Date.now(), title, desc, type, priority, status, date: new Date().toISOString().slice(0,10) });
+      }
+      saveData(); closeModal(); render();
+    }
+    function deleteCard() {
+      if (!editingId) return;
+      if (!confirm('Supprimer ce projet ?')) return;
+      projects = projects.filter(p => p.id !== editingId);
+      saveData(); closeModal(); render();
+    }
+
+    // --- PERSISTENCE ---
+    function saveData() {
+      localStorage.setItem('kanban-projects', JSON.stringify(projects));
+    }
+    function loadData() {
+      const raw = localStorage.getItem('kanban-projects');
+      if (raw) {
+        try { projects = JSON.parse(raw); } catch(e) {}
+      }
+    }
+
+    // --- INIT ---
+    loadData();
+    render();
+
+    // Service Worker registration (PWA offline support)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then((reg) => console.log('SW registered:', reg.scope))
+        .catch((err) => console.log('SW registration failed:', err));
+    }
+  </script>
+</body>
+</html>
