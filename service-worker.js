@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kanban-v2';
+const CACHE_NAME = 'kanban-v3';
 const FILES_TO_CACHE = [
   './',
   './index.html',
@@ -26,11 +26,21 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Interception des requêtes : sert depuis le cache si offline
+// Interception des requêtes : sert depuis le cache si offline, utilise fetch sinon
 self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request).then((response) => {
-      return response || fetch(e.request);
+      if (response) { return response; }
+      // Fallback pour les requêtes racine
+      if (e.request.mode === 'navigate') {
+        return caches.match('./index.html');
+      }
+      return fetch(e.request);
+    }).catch(() => {
+      // En dernier recours, retourne index.html
+      if (e.request.mode === 'navigate') {
+        return caches.match('./index.html');
+      }
     })
   );
 });
