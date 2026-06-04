@@ -1,6 +1,7 @@
-const CACHE_NAME = 'kanban-v1';
+const CACHE_NAME = 'kanban-v2';
 const FILES_TO_CACHE = [
-  './kanban-projets.html',
+  './',
+  './index.html',
   './manifest.json',
   './service-worker.js'
 ];
