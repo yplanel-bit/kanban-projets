@@ -1,7 +1,8 @@
-const CACHE_NAME = 'kanban-v3';
+const CACHE_NAME = 'kanban-v4';
 const FILES_TO_CACHE = [
   './',
   './index.html',
+  './404.html',
   './manifest.json',
   './service-worker.js'
 ];
